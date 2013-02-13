@@ -12,8 +12,8 @@ namespace EngineThrustController
         public bool canAdjustAtAnytime = true;
         [KSPField]
         public float percentAdjustmentStep = 0.1f;
-    	[KSPField(isPersistant = true)]
-		int gp=0;
+		[KSPField(isPersistant = true)]
+		public int gp=0;
         [KSPField]
         public float minimumThrustPercent = 0.4f;
         [KSPField]
@@ -94,10 +94,12 @@ namespace EngineThrustController
 			Events["Group2"].guiName = "Set Group 2" ;
             base.OnStart(state);
         }
+		[KSPEvent(name = "Group1", guiActive = true, guiName = "Set Group 1", active = true, category = "Grouping")]
 		public void Group1 ()
 		{
 			gp = 1;
 		}
+		[KSPEvent(name = "Group2", guiActive = true, guiName = "Set Group 1", active = true, category = "Grouping")]
 		public void Group2 ()
 		{
 			gp = 2;
