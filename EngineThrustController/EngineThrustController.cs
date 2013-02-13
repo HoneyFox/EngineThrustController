@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +12,8 @@ namespace EngineThrustController
         public bool canAdjustAtAnytime = true;
         [KSPField]
         public float percentAdjustmentStep = 0.1f;
+    	[KSPField(isPersistant = true)]
+		int gp=0;
         [KSPField]
         public float minimumThrustPercent = 0.4f;
         [KSPField]
@@ -88,10 +90,18 @@ namespace EngineThrustController
             
             Events["ContextMenuIncreaseThrust"].guiName = "Increase Thrust by " + percentAdjustmentStep.ToString("0%");
             Events["ContextMenuDecreaseThrust"].guiName = "Decrease Thrust by " + percentAdjustmentStep.ToString("0%");
-            
+			Events["Group1"].guiName = "Set Group 1" ;
+			Events["Group2"].guiName = "Set Group 2" ;
             base.OnStart(state);
         }
-
+		public void Group1 ()
+		{
+			gp = 1;
+		}
+		public void Group2 ()
+		{
+			gp = 2;
+		}
         [KSPEvent(name = "ContextMenuIncreaseThrust", guiActive = true, guiName = "Increase Thrust", active = true, category = "Thrust Control")]
         public void ContextMenuIncreaseThrust()
         {
@@ -130,12 +140,12 @@ namespace EngineThrustController
                 engine.heatProduction = originalHeatProduction * thrustPercent;
             }
         }
-        [KSPAction("Increase Thrust", actionGroup = KSPActionGroup.None)]
+        [KSPAction("Increase thrust", actionGroup = KSPActionGroup.None)]
         public void ActionGroupIncreaseThrust(KSPActionParam param)
         {
             ContextMenuIncreaseThrust();
         }
-        [KSPAction("Decrease Thrust", actionGroup = KSPActionGroup.None)]
+        [KSPAction("Decrease thrust", actionGroup = KSPActionGroup.None)]
         public void ActionGroupDecreaseThrust(KSPActionParam param)
         {
             ContextMenuDecreaseThrust();
@@ -146,7 +156,23 @@ namespace EngineThrustController
             string info = "Adjustable thrust.\n  Range: " + minimumThrustPercent.ToString("0%") + " - " + maximumThrustPercent.ToString("0%") + "\n  Step: " + ((int)(percentAdjustmentStep * 100.0f)).ToString() + "%";
             return info;
         }
-
+		public void SetPercentage(float percent)
+		{
+			if (canAdjustAtAnytime == false) return;
+			thrustPercent=percent;
+			if (thrustPercent > maximumThrustPercent) thrustPercent = maximumThrustPercent;
+			if (thrustPercent < minimumThrustPercent) thrustPercent = minimumThrustPercent;
+			if (thrustPercent > 1.0f) thrustPercent = 1.0f;
+			if (thrustPercent < 0.0f) thrustPercent = 0.0f;
+			
+			engine = null;
+			BindEngine();
+			if (engine != null)
+			{
+				engine.maxThrust = originalMaxThrust * thrustPercent;
+				engine.heatProduction = originalHeatProduction * thrustPercent;
+			}
+		}
         public void IncreaseInitialThrust()
         {
             initialThrust += percentAdjustmentStep;
