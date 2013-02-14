@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -87,7 +87,7 @@ namespace EngineThrustController
                 WindowPos.width = WindowPos.height = 10;
                 windowUpdated = false;
             }
-            GUI.skin = HighLogic.Skin;
+
             WindowPos = GUILayout.Window(2121314, WindowPos, WindowFunc, "Engine Thrust Controller", GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true), GUILayout.MinWidth(200));
             Vector3 mousePos = Input.mousePosition;         //Mouse location; based on Kerbal Engineer Redux code
             mousePos.y = Screen.height - mousePos.y;
@@ -237,9 +237,17 @@ namespace EngineThrustController
                 {
                     isDecreaseButtonClicked = GUILayout.Button("-", sty, GUILayout.ExpandWidth(true), GUILayout.MaxWidth(30.0f));
                     GUILayout.Box(m_controller.initialThrust.ToString("0%"), sty, GUILayout.ExpandWidth(true));
-                    isIncreaseButtonClicked = GUILayout.Button("+", sty, GUILayout.ExpandWidth(true), GUILayout.MaxWidth(30.0f));                            
+                    isIncreaseButtonClicked = GUILayout.Button("+", sty, GUILayout.ExpandWidth(true), GUILayout.MaxWidth(30.0f));     
+
                 }
                 GUILayout.EndHorizontal();
+    			GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
+				{
+					GUILayout.Box("Current group:"+m_controller.gp.ToString(), sty, GUILayout.ExpandWidth(true));
+					if(GUILayout.Button("Set to Group 1", sty, GUILayout.ExpandWidth(true), GUILayout.MaxWidth(300.0f)))m_controller.gp=1;
+					if(GUILayout.Button("Set to Group 2", sty, GUILayout.ExpandWidth(true), GUILayout.MaxWidth(300.0f)))m_controller.gp=2;
+				}
+				GUILayout.EndHorizontal();
             }
             else
             {
