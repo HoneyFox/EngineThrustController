@@ -7,8 +7,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{1D33C008-B4E0-4E1A-9A2B-4B16758F0080}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>ksp2</RootNamespace>
-    <AssemblyName>ksp2</AssemblyName>
+    <RootNamespace>AutoFlight</RootNamespace>
+    <AssemblyName>AutoFlight</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>

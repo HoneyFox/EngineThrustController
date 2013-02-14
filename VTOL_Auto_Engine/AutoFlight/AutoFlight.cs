@@ -62,7 +62,7 @@ public class AutoFlight : Part
 		{
 			ratio = l1 / l2;
 			foreach (Part i in p2) {
-				ModuleEngineThrustController controller = i.Modules["EngineThrustController"] as ModuleEngineThrustController;
+				ModuleEngineThrustController controller = i.Modules["ModuleEngineThrustController"] as ModuleEngineThrustController;
 				controller.SetPercentage (ratio);
 			}
 		}

@@ -1,8 +1,9 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="ksp2\AutoFlight.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="AutoFlight\AutoFlight.cs">
     <Files>
-      <File FileName="ksp2\AutoFlight.cs" Line="19" Column="1" />
+      <File FileName="AutoFlight\AutoFlight.cs" Line="51" Column="50" />
+      <File FileName="AutoFlight\AssemblyInfo.cs" Line="8" Column="14" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
