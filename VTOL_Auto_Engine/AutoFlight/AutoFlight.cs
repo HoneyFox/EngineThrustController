@@ -43,10 +43,10 @@ public class AutoFlight : Part
 		float l1 = 0, l2 = 0, ratio;
 		foreach (Part i in p1) {
 			//Debug.Log (vessel.transform.InverseTransformPoint (i.transform.position).x.ToString()+","+vessel.transform.InverseTransformPoint (i.transform.position).y.ToString()+","+vessel.transform.InverseTransformPoint (i.transform.position).z.ToString());
-			l1 += (vessel.transform.InverseTransformPoint (i.transform.position) - vessel.findLocalCenterOfMass ()).y;
+			l1 += (vessel.transform.InverseTransformPoint (i.transform.position) - vessel.findLocalCenterOfMass ()).y*i.maxThrust;
 		}
 		foreach (Part i in p2) {
-			l2 += (vessel.transform.InverseTransformPoint (i.transform.position) - vessel.findLocalCenterOfMass ()).y;
+			l2 += (vessel.transform.InverseTransformPoint (i.transform.position) - vessel.findLocalCenterOfMass ()).y*i.maxThrust;
 		}
 		//Debug.Log (l1.ToString()+"  "+l2.ToString());
 		l1 = abs (l1);
@@ -87,15 +87,15 @@ public class AutoFlight : Part
 		mySty.padding = new RectOffset(8, 8, 8, 8);
 			
 		GUILayout.BeginVertical();
-		if (GUILayout.Button("Update",mySty,GUILayout.ExpandWidth(true)))//GUILayout.Button is "true" when clicked
+		if (GUILayout.Button("Update Group Settings",mySty,GUILayout.ExpandWidth(true)))//GUILayout.Button is "true" when clicked
 		{	
 			exc();
 		}
-		if(GUILayout.Button("Set",mySty,GUILayout.ExpandWidth(true)))
+		if(GUILayout.Button("Take Control",mySty,GUILayout.ExpandWidth(true)))
 		{
 			RState=true;
 		}
-		if(GUILayout.Button("UnSet",mySty,GUILayout.ExpandWidth(true)))
+		if(GUILayout.Button("Restore",mySty,GUILayout.ExpandWidth(true)))
 		{
 			RState=false;
 			UnRun();
