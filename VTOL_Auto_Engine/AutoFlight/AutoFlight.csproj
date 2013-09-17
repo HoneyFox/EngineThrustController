@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -31,13 +31,13 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="Assembly-CSharp">
-      <HintPath>E:\ksp\installs\KSP_win\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\..\..\..\Kerbal Space Program v0.21\KSP_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>E:\ksp\installs\KSP_win\KSP_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>..\..\..\..\Kerbal Space Program v0.21\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="EngineThrustController">
-      <HintPath>E:\ksp\installs\KSP_win\Plugins\EngineThrustController.dll</HintPath>
+      <HintPath>..\..\EngineThrustController\bin\Release\EngineThrustController.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

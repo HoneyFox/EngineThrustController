@@ -6,10 +6,13 @@ using UnityEngine;
 
 namespace EngineThrustController
 {
-    public class ModuleEngineThrustController : PartModule
+    public partial class ModuleEngineThrustController : PartModule
     {
         [KSPField(isPersistant = true)]
         public bool canAdjustAtAnytime = true;
+		[KSPField]
+		public bool canAdjustOverride = false;
+
         [KSPField]
         public float percentAdjustmentStep = 0.1f;
 		[KSPField(isPersistant = true)]
@@ -30,6 +33,7 @@ namespace EngineThrustController
         float thrustPercent;
 
         ModuleEngines engine = null;
+		StartState m_state = StartState.None;
 
         private void BindEngine()
         {
@@ -47,6 +51,7 @@ namespace EngineThrustController
         public override void OnStart(StartState state)
         {
             Debug.Log("ModuleEngineThrustController OnStart(" + state.ToString() + ")");
+			m_state = state;
 
             if (state == StartState.None) return;
             
@@ -72,9 +77,10 @@ namespace EngineThrustController
                     thrustPercent = initialThrust;
                 else if (state == StartState.Editor)
                     thrustPercent = initialThrust;
-                engine.maxThrust = originalMaxThrust * thrustPercent;
-                engine.heatProduction = originalHeatProduction * thrustPercent;
-            }
+
+				engine.maxThrust = originalMaxThrust * thrustPercent;
+				engine.heatProduction = originalHeatProduction * thrustPercent;
+			}
             Debug.Log("Data saved:" + originalMaxThrust.ToString() + " " + thrustPercent.ToString("0%"));
 
             if (state == StartState.Editor)
@@ -87,11 +93,23 @@ namespace EngineThrustController
             {
                 EngineThrustControllerGUI.GetInstance().ClearGUIItem();
             }
-            
-            Events["ContextMenuIncreaseThrust"].guiName = "Increase Thrust by " + percentAdjustmentStep.ToString("0%");
-            Events["ContextMenuDecreaseThrust"].guiName = "Decrease Thrust by " + percentAdjustmentStep.ToString("0%");
-			Events["Group1"].guiName = "Set Group 1" ;
-			Events["Group2"].guiName = "Set Group 2" ;
+
+			if (canAdjustAtAnytime == true)
+			{
+				Events["ContextMenuIncreaseThrust"].guiName = "Increase Thrust by " + percentAdjustmentStep.ToString("0%");
+				Events["ContextMenuDecreaseThrust"].guiName = "Decrease Thrust by " + percentAdjustmentStep.ToString("0%");
+			}
+			else
+			{
+				Events["ContextMenuIncreaseThrust"].guiActive = false;
+				Events["ContextMenuIncreaseThrust"].active = false;
+				Events["ContextMenuDecreaseThrust"].guiActive = false;
+				Events["ContextMenuDecreaseThrust"].active = false;
+			}
+			Events["Group1"].guiName = "Set Group 1";
+			Events["Group2"].guiName = "Set Group 2";
+			Events["Group1"].guiActive = false;
+			Events["Group2"].guiActive = false;
             base.OnStart(state);
         }
 		[KSPEvent(name = "Group1", guiActive = true, guiName = "Set Group 1", active = true, category = "Grouping")]
@@ -118,7 +136,7 @@ namespace EngineThrustController
             engine = null;
             BindEngine();
             if (engine != null)
-            {
+			{
                 engine.maxThrust = originalMaxThrust * thrustPercent;
                 engine.heatProduction = originalHeatProduction * thrustPercent;
             }
@@ -137,8 +155,8 @@ namespace EngineThrustController
             engine = null;
             BindEngine();
             if (engine != null)
-            {
-                engine.maxThrust = originalMaxThrust * thrustPercent;
+			{
+				engine.maxThrust = originalMaxThrust * thrustPercent;
                 engine.heatProduction = originalHeatProduction * thrustPercent;
             }
         }
@@ -158,10 +176,31 @@ namespace EngineThrustController
             string info = "Adjustable thrust.\n  Range: " + minimumThrustPercent.ToString("0%") + " - " + maximumThrustPercent.ToString("0%") + "\n  Step: " + ((int)(percentAdjustmentStep * 100.0f)).ToString() + "%";
             return info;
         }
+
+		public override void OnUpdate()
+		{
+			if (m_state != StartState.None && m_state != StartState.Editor)
+			{
+				if (canAdjustOverride == false)
+				{
+					engine = null;
+					BindEngine();
+					if (part.findFxGroup("running") != null && engine != null)
+					{
+						part.findFxGroup("running").SetPower(thrustPercent * vessel.ctrlState.mainThrottle);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// This function should be called in FixedUpdate() because it will forcibly change the throttle setting which will be reset every frame.
+		/// </summary>
+		/// <param name="percent">The throttle percentage.</param>
 		public void SetPercentage(float percent)
 		{
-			if (canAdjustAtAnytime == false) return;
-			thrustPercent=percent;
+			if (canAdjustAtAnytime == false && canAdjustOverride == false) return;
+			thrustPercent = percent;
 			if (thrustPercent > maximumThrustPercent) thrustPercent = maximumThrustPercent;
 			if (thrustPercent < minimumThrustPercent) thrustPercent = minimumThrustPercent;
 			if (thrustPercent > 1.0f) thrustPercent = 1.0f;
@@ -171,8 +210,14 @@ namespace EngineThrustController
 			BindEngine();
 			if (engine != null)
 			{
-				engine.maxThrust = originalMaxThrust * thrustPercent;
-				engine.heatProduction = originalHeatProduction * thrustPercent;
+				if (part.findFxGroup("running") != null)
+				{
+					Debug.Log("Setting FXGroup to: " + thrustPercent.ToString());
+					part.findFxGroup("running").SetPower(thrustPercent);
+				}
+				engine.currentThrottle = thrustPercent;
+				engine.maxThrust = originalMaxThrust;
+				engine.heatProduction = originalHeatProduction;
 			}
 		}
         public void IncreaseInitialThrust()

@@ -22,6 +22,8 @@ public class AutoFlight : Part
 			if(i.Modules.Contains("ModuleEngineThrustController"))
 			{
 				ModuleEngineThrustController controller = i.Modules["ModuleEngineThrustController"] as ModuleEngineThrustController;
+				controller.Events["Group1"].guiActive = true;
+				controller.Events["Group2"].guiActive = true;
 				if(controller.gp == 1)
 					p1.Add(i);
 				if(controller.gp == 2)
