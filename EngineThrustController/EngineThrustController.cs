@@ -30,7 +30,10 @@ namespace EngineThrustController
         float originalHeatProduction;
 
         [KSPField(isPersistant = true, guiActive = true, guiName = "Thrust Percent", guiFormat = "0%")]
-        float thrustPercent;
+		float thrustPercent;
+
+		[KSPField]
+		public bool showItemInList = true;
 
         ModuleEngines engine = null;
 		StartState m_state = StartState.None;
@@ -86,7 +89,10 @@ namespace EngineThrustController
             if (state == StartState.Editor)
             {
                 EngineThrustControllerGUI.GetInstance().CheckClear();
-                EngineThrustControllerGUIItem item = new EngineThrustControllerGUIItem(EngineThrustControllerGUI.GetInstance(), this);
+				if (showItemInList == true)
+				{
+					EngineThrustControllerGUIItem item = new EngineThrustControllerGUIItem(EngineThrustControllerGUI.GetInstance(), this);
+				}
                 return;
             }
             else

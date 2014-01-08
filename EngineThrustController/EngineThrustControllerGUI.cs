@@ -77,6 +77,11 @@ namespace EngineThrustController
         private void DeleteGUI()
         {
             Debug.Log("DeleteGUI");
+			if (editorLocked)
+			{
+				EditorLogic.fetch.Unlock("ETC");
+				editorLocked = false;
+			}
             RenderingManager.RemoveFromPostDrawQueue(3, DrawGUI);
         }
 
@@ -93,14 +98,14 @@ namespace EngineThrustController
             mousePos.y = Screen.height - mousePos.y;
             bool cursorInGUI = WindowPos.Contains(mousePos);
             //This locks and unlocks the editor as necessary; cannot constantly call the lock or unlock functions as that causes the editor to be constantly locked
-            if (cursorInGUI && !editorLocked && !EditorLogic.editorLocked)
+            if (cursorInGUI && !editorLocked)
             {
-                EditorLogic.fetch.Lock(true, true, true);
+                EditorLogic.fetch.Lock(true, true, true, "ETC");
                 editorLocked = true;
             }
-            else if (!cursorInGUI && editorLocked && EditorLogic.editorLocked)
+            else if (!cursorInGUI && editorLocked)
             {
-                EditorLogic.fetch.Unlock();
+                EditorLogic.fetch.Unlock("ETC");
                 editorLocked = false;
             }
         }
