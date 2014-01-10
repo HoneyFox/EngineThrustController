@@ -218,7 +218,7 @@ namespace EngineThrustController
 			{
 				if (part.findFxGroup("running") != null)
 				{
-					Debug.Log("Setting FXGroup to: " + thrustPercent.ToString());
+					//Debug.Log("Setting FXGroup to: " + thrustPercent.ToString());
 					part.findFxGroup("running").SetPower(thrustPercent);
 				}
 				engine.currentThrottle = thrustPercent;
