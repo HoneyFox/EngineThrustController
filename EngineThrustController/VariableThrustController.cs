@@ -25,6 +25,8 @@ namespace EngineThrustController
 
 		public ModuleEngineThrustController parentController = null;
 		public PartResource parentResource = null;
+
+		private float percentageFix = 1.0f;
 		
 		private StartState m_startState = StartState.None;
 
@@ -34,6 +36,18 @@ namespace EngineThrustController
 			if (state == StartState.None || state == StartState.Editor) return;
 
 			BindController();
+
+			if (parentController != null)
+			{
+				if (parentController.engine != null)
+				{
+					percentageFix = parentController.engine.thrustPercentage / 100.0f;
+				}
+				else if (parentController.engineFX != null)
+				{
+					percentageFix = parentController.engineFX.thrustPercentage / 100.0f;
+				}
+			}
 
 			base.OnStart(state);
 		}
@@ -70,7 +84,7 @@ namespace EngineThrustController
 
 						float timeElapsed = Convert.ToSingle(Planetarium.GetUniversalTime() - ignitionStartTime);
 
-						float thrustPercent = timeCurve.Evaluate(timeElapsed);
+						float thrustPercent = timeCurve.Evaluate(timeElapsed) * percentageFix;
 						//Debug.Log("VariableThrustController: timeElapsed = " + timeElapsed.ToString("F2") + " thrust: " + (thrustPercent * 100.0f).ToString("F2") + "%");
 						parentController.SetPercentage(thrustPercent);
 					}
@@ -78,7 +92,7 @@ namespace EngineThrustController
 				else
 				{
 					float fuelAmount = Convert.ToSingle(parentResource.amount / parentResource.maxAmount);
-					float thrustPercent = thrustCurve.Evaluate(fuelAmount);
+					float thrustPercent = thrustCurve.Evaluate(fuelAmount) * percentageFix;
 					//Debug.Log("VariableThrustController: fuelAmount = " + fuelAmount.ToString("F2") + " thrust: " + (thrustPercent * 100.0f).ToString("F2") + "%");
 					parentController.SetPercentage(thrustPercent);
 				}

@@ -35,12 +35,15 @@ namespace EngineThrustController
 		[KSPField]
 		public bool showItemInList = true;
 
-        ModuleEngines engine = null;
+        public ModuleEngines engine = null;
+		public ModuleEnginesFX engineFX = null;
+
 		StartState m_state = StartState.None;
 
         private void BindEngine()
         {
             engine = null;
+			engineFX = null;
             foreach (PartModule module in this.part.Modules)
             {
                 if (module is ModuleEngines)
@@ -48,6 +51,11 @@ namespace EngineThrustController
                     engine = module as ModuleEngines;
                     break;
                 }
+				else if (module is ModuleEnginesFX)
+				{
+					engineFX = module as ModuleEnginesFX;
+					break;
+				}
             }
         }
 
@@ -83,6 +91,18 @@ namespace EngineThrustController
 
 				engine.maxThrust = originalMaxThrust * thrustPercent;
 				engine.heatProduction = originalHeatProduction * thrustPercent;
+			}
+			else if (engineFX != null)
+			{
+				originalMaxThrust = engineFX.maxThrust;
+				originalHeatProduction = engineFX.heatProduction;
+				if (((int)state & (int)StartState.PreLaunch) > 0)
+					thrustPercent = initialThrust;
+				else if (state == StartState.Editor)
+					thrustPercent = initialThrust;
+
+				engineFX.maxThrust = originalMaxThrust * thrustPercent;
+				engineFX.heatProduction = originalHeatProduction * thrustPercent;
 			}
             Debug.Log("Data saved:" + originalMaxThrust.ToString() + " " + thrustPercent.ToString("0%"));
 
@@ -139,12 +159,16 @@ namespace EngineThrustController
             if (thrustPercent > 1.0f) thrustPercent = 1.0f;
             if (thrustPercent < 0.0f) thrustPercent = 0.0f;
 
-            engine = null;
             BindEngine();
             if (engine != null)
 			{
                 engine.maxThrust = originalMaxThrust * thrustPercent;
                 engine.heatProduction = originalHeatProduction * thrustPercent;
+            }
+			else if (engineFX != null)
+			{
+                engineFX.maxThrust = originalMaxThrust * thrustPercent;
+                engineFX.heatProduction = originalHeatProduction * thrustPercent;
             }
         }
         [KSPEvent(name = "ContextMenuDecreaseThrust", guiActive = true, guiName = "Decrease Thrust", active = true, category = "Thrust Control")]
@@ -158,13 +182,17 @@ namespace EngineThrustController
             if (thrustPercent > 1.0f) thrustPercent = 1.0f;
             if (thrustPercent < 0.0f) thrustPercent = 0.0f;
 
-            engine = null;
             BindEngine();
             if (engine != null)
 			{
 				engine.maxThrust = originalMaxThrust * thrustPercent;
                 engine.heatProduction = originalHeatProduction * thrustPercent;
-            }
+			}
+			else if (engineFX != null)
+			{
+				engineFX.maxThrust = originalMaxThrust * thrustPercent;
+				engineFX.heatProduction = originalHeatProduction * thrustPercent;
+			}
         }
         [KSPAction("Increase thrust", actionGroup = KSPActionGroup.None)]
         public void ActionGroupIncreaseThrust(KSPActionParam param)
@@ -189,9 +217,8 @@ namespace EngineThrustController
 			{
 				if (canAdjustOverride == false)
 				{
-					engine = null;
 					BindEngine();
-					if (part.findFxGroup("running") != null && engine != null)
+					if (part.findFxGroup("running") != null && (engine != null || engineFX != null))
 					{
 						part.findFxGroup("running").SetPower(thrustPercent * vessel.ctrlState.mainThrottle);
 					}
@@ -212,7 +239,6 @@ namespace EngineThrustController
 			if (thrustPercent > 1.0f) thrustPercent = 1.0f;
 			if (thrustPercent < 0.0f) thrustPercent = 0.0f;
 			
-			engine = null;
 			BindEngine();
 			if (engine != null)
 			{
@@ -225,6 +251,17 @@ namespace EngineThrustController
 				engine.maxThrust = originalMaxThrust;
 				engine.heatProduction = originalHeatProduction;
 			}
+			else if (engineFX != null)
+			{
+				if (part.findFxGroup("running") != null)
+				{
+					//Debug.Log("Setting FXGroup to: " + thrustPercent.ToString());
+					part.findFxGroup("running").SetPower(thrustPercent);
+				}
+				engineFX.currentThrottle = thrustPercent;
+				engineFX.maxThrust = originalMaxThrust;
+				engineFX.heatProduction = originalHeatProduction;
+			}
 		}
         public void IncreaseInitialThrust()
         {
@@ -234,10 +271,11 @@ namespace EngineThrustController
             if (initialThrust > 1.0f) initialThrust = 1.0f;
             if (initialThrust < 0.0f) initialThrust = 0.0f;
 
-            engine = null;
             BindEngine();
             if (engine != null)
                 engine.maxThrust = originalMaxThrust * initialThrust;
+			else if (engineFX != null)
+				engineFX.maxThrust = originalMaxThrust * initialThrust;
         }
 
         public void DecreaseInitialThrust()
@@ -248,10 +286,11 @@ namespace EngineThrustController
             if (initialThrust > 1.0f) initialThrust = 1.0f;
             if (initialThrust < 0.0f) initialThrust = 0.0f;
 
-            engine = null;
             BindEngine();
             if (engine != null)
                 engine.maxThrust = originalMaxThrust * initialThrust;
+			else if (engineFX != null)
+				engineFX.maxThrust = originalMaxThrust * initialThrust;
         }
 
     }
