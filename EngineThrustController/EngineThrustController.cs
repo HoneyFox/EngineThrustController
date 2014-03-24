@@ -247,9 +247,13 @@ namespace EngineThrustController
 					//Debug.Log("Setting FXGroup to: " + thrustPercent.ToString());
 					part.findFxGroup("running").SetPower(thrustPercent);
 				}
+				engine.requestedThrottle = thrustPercent;
 				engine.currentThrottle = thrustPercent;
-				engine.maxThrust = originalMaxThrust;
-				engine.heatProduction = originalHeatProduction;
+				if (canAdjustOverride == false)
+				{
+					engine.maxThrust = originalMaxThrust;
+					engine.heatProduction = originalHeatProduction;
+				}
 			}
 			else if (engineFX != null)
 			{
@@ -258,9 +262,13 @@ namespace EngineThrustController
 					//Debug.Log("Setting FXGroup to: " + thrustPercent.ToString());
 					part.findFxGroup("running").SetPower(thrustPercent);
 				}
+				engineFX.requestedThrottle = thrustPercent;
 				engineFX.currentThrottle = thrustPercent;
-				engineFX.maxThrust = originalMaxThrust;
-				engineFX.heatProduction = originalHeatProduction;
+				if (canAdjustOverride == false)
+				{
+					engineFX.maxThrust = originalMaxThrust;
+					engineFX.heatProduction = originalHeatProduction;
+				}
 			}
 		}
         public void IncreaseInitialThrust()

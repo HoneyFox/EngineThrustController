@@ -41,11 +41,11 @@ namespace EngineThrustController
 			{
 				if (parentController.engine != null)
 				{
-					percentageFix = parentController.engine.thrustPercentage / 100.0f;
+					percentageFix = Mathf.Clamp(parentController.engine.thrustPercentage, 0.0f, 100.0f) / 100.0f;
 				}
 				else if (parentController.engineFX != null)
 				{
-					percentageFix = parentController.engineFX.thrustPercentage / 100.0f;
+					percentageFix = Mathf.Clamp(parentController.engineFX.thrustPercentage, 0.0f, 100.0f) / 100.0f;
 				}
 			}
 
@@ -69,6 +69,17 @@ namespace EngineThrustController
 			{
 				parentResource = part.Resources[resourceName];
 			}
+
+			if (parentController.engine != null)
+			{
+				parentController.engine.useEngineResponseTime = true;
+				parentController.engine.engineAccelerationSpeed = parentController.engine.engineDecelerationSpeed = 0.0f;
+			}
+			else if (parentController.engineFX != null)
+			{
+				parentController.engineFX.useEngineResponseTime = true;
+				parentController.engineFX.engineAccelerationSpeed = parentController.engineFX.engineDecelerationSpeed = 0.0f;
+			}
 		}
 
 		public override void OnFixedUpdate()
@@ -84,7 +95,7 @@ namespace EngineThrustController
 
 						float timeElapsed = Convert.ToSingle(Planetarium.GetUniversalTime() - ignitionStartTime);
 
-						float thrustPercent = timeCurve.Evaluate(timeElapsed) * percentageFix;
+						float thrustPercent = Mathf.Clamp01(timeCurve.Evaluate(timeElapsed)) * percentageFix;
 						//Debug.Log("VariableThrustController: timeElapsed = " + timeElapsed.ToString("F2") + " thrust: " + (thrustPercent * 100.0f).ToString("F2") + "%");
 						parentController.SetPercentage(thrustPercent);
 					}
@@ -92,7 +103,7 @@ namespace EngineThrustController
 				else
 				{
 					float fuelAmount = Convert.ToSingle(parentResource.amount / parentResource.maxAmount);
-					float thrustPercent = thrustCurve.Evaluate(fuelAmount) * percentageFix;
+					float thrustPercent = Mathf.Clamp01(thrustCurve.Evaluate(fuelAmount)) * percentageFix;
 					//Debug.Log("VariableThrustController: fuelAmount = " + fuelAmount.ToString("F2") + " thrust: " + (thrustPercent * 100.0f).ToString("F2") + "%");
 					parentController.SetPercentage(thrustPercent);
 				}
