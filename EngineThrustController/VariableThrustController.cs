@@ -23,6 +23,9 @@ namespace EngineThrustController
 		[KSPField(isPersistant = false)]
 		public string resourceName = "SolidFuel";
 
+		[KSPField(isPersistant = false, guiName = "Accel", guiActive = true)]
+		private string acceleration = "0.0G";
+
 		public ModuleEngineThrustController parentController = null;
 		public PartResource parentResource = null;
 
@@ -98,6 +101,13 @@ namespace EngineThrustController
 						float thrustPercent = Mathf.Clamp01(timeCurve.Evaluate(timeElapsed)) * percentageFix;
 						//Debug.Log("VariableThrustController: timeElapsed = " + timeElapsed.ToString("F2") + " thrust: " + (thrustPercent * 100.0f).ToString("F2") + "%");
 						parentController.SetPercentage(thrustPercent);
+
+						float acc = 0.0f;
+						if(parentController.engine != null)
+							acc = parentController.engine.finalThrust / (parentController.part.mass + parentController.part.GetResourceMass()) / 9.82f;
+						else if(parentController.engineFX != null)
+							acc = parentController.engineFX.finalThrust / (parentController.part.mass + parentController.part.GetResourceMass()) / 9.82f;
+						acceleration = acc.ToString("F1") + "G";
 					}
 				}
 				else
@@ -106,6 +116,13 @@ namespace EngineThrustController
 					float thrustPercent = Mathf.Clamp01(thrustCurve.Evaluate(fuelAmount)) * percentageFix;
 					//Debug.Log("VariableThrustController: fuelAmount = " + fuelAmount.ToString("F2") + " thrust: " + (thrustPercent * 100.0f).ToString("F2") + "%");
 					parentController.SetPercentage(thrustPercent);
+					
+					float acc = 0.0f;
+					if (parentController.engine != null)
+						acc = parentController.engine.finalThrust / (parentController.part.mass + parentController.part.GetResourceMass()) / 9.82f;
+					else if (parentController.engineFX != null)
+						acc = parentController.engineFX.finalThrust / (parentController.part.mass + parentController.part.GetResourceMass()) / 9.82f;
+					acceleration = acc.ToString("F1") + "G";
 				}
 			}
 		}
