@@ -14,6 +14,9 @@ Global
 		{7981AF5D-E95C-4918-805A-DDC3E13EDF59}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7981AF5D-E95C-4918-805A-DDC3E13EDF59}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = EngineThrustController\EngineThrustController.csproj
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
