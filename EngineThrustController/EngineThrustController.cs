@@ -158,7 +158,7 @@ namespace EngineThrustController
         /// <param name="step">Step.</param>
         public void AdjustPercentage(float step)
         {
-            this.SetPercentage(this.GetPercentage + step);
+            this.SetPercentage(this.GetPercentage() + step);
         }
 
         /// <summary>
