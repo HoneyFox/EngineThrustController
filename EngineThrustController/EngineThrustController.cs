@@ -34,8 +34,7 @@ namespace EngineThrustController
         public ModuleEngines engine = null;
 		public ModuleEnginesFX engineFX = null;
 
-		StartState m_state = StartState.None;
-
+	
         /// <summary>
         /// Retrieves the engine module from the part this module is contained in
         /// </summary>
@@ -61,28 +60,13 @@ namespace EngineThrustController
         public override void OnStart(StartState state)
         {
             Debug.Log("ModuleEngineThrustController OnStart(" + state.ToString() + ")");
-			m_state = state;
-
-            if (state == StartState.None) return;
+            if (state == StartState.None)
+                return;
             
             BindEngine();
 
             maximumThrustPercent = Mathf.Clamp01(maximumThrustPercent);
             minimumThrustPercent = Mathf.Clamp(minimumThrustPercent, 0, maximumThrustPercent);
-
-            if (state == StartState.Editor)
-            {
-                EngineThrustControllerGUI.GetInstance().CheckClear();
-				if (showItemInList == true)
-				{
-					EngineThrustControllerGUIItem item = new EngineThrustControllerGUIItem(EngineThrustControllerGUI.GetInstance(), this);
-				}
-                return;
-            }
-            else
-            {
-                EngineThrustControllerGUI.GetInstance().ClearGUIItem();
-            }
 
 			if (canAdjustAtAnytime)
 			{

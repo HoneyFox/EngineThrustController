@@ -32,12 +32,10 @@ namespace EngineThrustController
         [KSPField(isPersistant = true)]
 		private float percentageFix = 1.0f;
 		
-		private StartState m_startState = StartState.None;
-
 		public override void OnStart(StartState state)
 		{
-			m_startState = state;
-			if (state == StartState.None || state == StartState.Editor) return;
+            if (state == StartState.None || state == StartState.Editor)
+                return;
 
 			BindController();
 
