@@ -65,7 +65,7 @@ namespace EngineThrustController
 			{
 				parentResource = part.Resources[resourceName];
 			}
-
+            /* -- NO LONGER REQUIRED SINCE ENGINE-SIDE CONTROL DELAY MAY BE DESIRABLE
 			if (parentController.engine != null)
 			{
 				parentController.engine.useEngineResponseTime = false;
@@ -74,6 +74,7 @@ namespace EngineThrustController
 			{
                 parentController.engineFX.useEngineResponseTime = false;
 			}
+            */         
 		}
 
 		public override void OnFixedUpdate()

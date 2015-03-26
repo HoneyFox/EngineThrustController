@@ -126,10 +126,17 @@ namespace EngineThrustController
             this.AdjustPercentage(-this.percentAdjustmentStep);
         }
 
+        /// <summary>
+        /// sync internal thrust value with actual value of the engine
+        /// </summary>
         public override void OnUpdate() {
             this.thrustPercent = this.GetPercentage();
         }
 
+        /// <summary>
+        /// In-Editor Module info box content
+        /// </summary>
+        /// <returns>The info.</returns>
         public override string GetInfo()
         {
             string info = "Adjustable thrust.\n  Range: " + minimumThrustPercent.ToString("0%") + " - " + maximumThrustPercent.ToString("0%") + "\n  Step: " + ((int)(percentAdjustmentStep * 100.0f)).ToString() + "%";
