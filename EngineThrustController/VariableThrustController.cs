@@ -29,27 +29,19 @@ namespace EngineThrustController
 		public ModuleEngineThrustController parentController = null;
 		public PartResource parentResource = null;
 
+        [KSPField(isPersistant = true)]
 		private float percentageFix = 1.0f;
 		
-		private StartState m_startState = StartState.None;
-
 		public override void OnStart(StartState state)
 		{
-			m_startState = state;
-			if (state == StartState.None || state == StartState.Editor) return;
+            if (state == StartState.None || state == StartState.Editor)
+                return;
 
 			BindController();
 
 			if (parentController != null)
 			{
-				if (parentController.engine != null)
-				{
-					percentageFix = Mathf.Clamp(parentController.engine.thrustPercentage, 0.0f, 100.0f) / 100.0f;
-				}
-				else if (parentController.engineFX != null)
-				{
-					percentageFix = Mathf.Clamp(parentController.engineFX.thrustPercentage, 0.0f, 100.0f) / 100.0f;
-				}
+                percentageFix = parentController.GetPercentage();
 			}
 
 			base.OnStart(state);
@@ -60,9 +52,10 @@ namespace EngineThrustController
 			parentController = null;
 			foreach (PartModule module in this.part.Modules)
 			{
-				if (module is ModuleEngineThrustController)
+                var engineController = module as ModuleEngineThrustController;
+				if (engineController != null)
 				{
-					parentController = module as ModuleEngineThrustController;
+                    parentController = engineController;
 					parentController.canAdjustOverride = true;
 					break;
 				}
@@ -72,59 +65,50 @@ namespace EngineThrustController
 			{
 				parentResource = part.Resources[resourceName];
 			}
-
+            /* -- NO LONGER REQUIRED SINCE ENGINE-SIDE CONTROL DELAY MAY BE DESIRABLE
 			if (parentController.engine != null)
 			{
-				parentController.engine.useEngineResponseTime = true;
-				parentController.engine.engineAccelerationSpeed = parentController.engine.engineDecelerationSpeed = 0.0f;
+				parentController.engine.useEngineResponseTime = false;
 			}
 			else if (parentController.engineFX != null)
 			{
-				parentController.engineFX.useEngineResponseTime = true;
-				parentController.engineFX.engineAccelerationSpeed = parentController.engineFX.engineDecelerationSpeed = 0.0f;
+                parentController.engineFX.useEngineResponseTime = false;
 			}
+            */         
 		}
 
 		public override void OnFixedUpdate()
 		{
-			if(parentResource != null && parentController != null)
-			{
-				if (useTimeCurve)
-				{
-					if (parentResource.amount < parentResource.maxAmount * 0.9999f)
-					{
-						if (ignitionStartTime == 0)
-							ignitionStartTime = Planetarium.GetUniversalTime();
+            if (parentResource == null || parentController == null)
+                return;
+			
+            if (useTimeCurve) {
+                if (parentResource.amount < parentResource.maxAmount * 0.9999f) {
+                    if (ignitionStartTime == 0)
+                        ignitionStartTime = Planetarium.GetUniversalTime();
 
-						float timeElapsed = Convert.ToSingle(Planetarium.GetUniversalTime() - ignitionStartTime);
+                    float timeElapsed = Convert.ToSingle(Planetarium.GetUniversalTime() - ignitionStartTime);
 
-						float thrustPercent = Mathf.Clamp01(timeCurve.Evaluate(timeElapsed)) * percentageFix;
-						//Debug.Log("VariableThrustController: timeElapsed = " + timeElapsed.ToString("F2") + " thrust: " + (thrustPercent * 100.0f).ToString("F2") + "%");
-						parentController.SetPercentage(thrustPercent);
+                    float thrustPercent = Mathf.Clamp01(timeCurve.Evaluate(timeElapsed)) * percentageFix;
+                    //Debug.Log("VariableThrustController: timeElapsed = " + timeElapsed.ToString("F2") + " thrust: " + (thrustPercent * 100.0f).ToString("F2") + "%");
+                    parentController.SetPercentage(thrustPercent);
 
-						float acc = 0.0f;
-						if(parentController.engine != null)
-							acc = parentController.engine.finalThrust / (parentController.part.mass + parentController.part.GetResourceMass()) / 9.82f;
-						else if(parentController.engineFX != null)
-							acc = parentController.engineFX.finalThrust / (parentController.part.mass + parentController.part.GetResourceMass()) / 9.82f;
-						acceleration = acc.ToString("F1") + "G";
-					}
-				}
-				else
-				{
-					float fuelAmount = Convert.ToSingle(parentResource.amount / parentResource.maxAmount);
-					float thrustPercent = Mathf.Clamp01(thrustCurve.Evaluate(fuelAmount)) * percentageFix;
-					//Debug.Log("VariableThrustController: fuelAmount = " + fuelAmount.ToString("F2") + " thrust: " + (thrustPercent * 100.0f).ToString("F2") + "%");
-					parentController.SetPercentage(thrustPercent);
-					
-					float acc = 0.0f;
-					if (parentController.engine != null)
-						acc = parentController.engine.finalThrust / (parentController.part.mass + parentController.part.GetResourceMass()) / 9.82f;
-					else if (parentController.engineFX != null)
-						acc = parentController.engineFX.finalThrust / (parentController.part.mass + parentController.part.GetResourceMass()) / 9.82f;
-					acceleration = acc.ToString("F1") + "G";
-				}
-			}
+                }
+            } else {
+                float fuelAmount = Convert.ToSingle(parentResource.amount / parentResource.maxAmount);
+                float thrustPercent = Mathf.Clamp01(thrustCurve.Evaluate(fuelAmount)) * percentageFix;
+                //Debug.Log("VariableThrustController: fuelAmount = " + fuelAmount.ToString("F2") + " thrust: " + (thrustPercent * 100.0f).ToString("F2") + "%");
+                parentController.SetPercentage(thrustPercent);
+            }
+
+            float thrust = 0;
+            if (parentController.engine != null)
+                thrust = parentController.engine.finalThrust;
+            else if (parentController.engineFX != null)
+                thrust = parentController.engineFX.finalThrust;
+
+            float acc = thrust / (part.mass + part.GetResourceMass()) / 9.82f;
+            acceleration = acc.ToString("F1") + "G";
 		}
 
 	}

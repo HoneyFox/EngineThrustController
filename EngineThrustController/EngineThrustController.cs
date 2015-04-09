@@ -21,15 +21,11 @@ namespace EngineThrustController
         public float minimumThrustPercent = 0.4f;
         [KSPField]
         public float maximumThrustPercent = 1.0f;
-        [KSPField(isPersistant = true)]
-        public float initialThrust = 1.0f;
 
-        [KSPField]
-        float originalMaxThrust;
-        [KSPField]
-        float originalHeatProduction;
-
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Thrust Percent", guiFormat = "0%")]
+        /// <summary>
+        /// Thrust percentage display. Takes its value directly from the engine thrust limiter
+        /// </summary>
+        [KSPField(guiActive = true, guiName = "Thrust Percent", guiFormat = "0%")]
 		float thrustPercent;
 
 		[KSPField]
@@ -38,89 +34,41 @@ namespace EngineThrustController
         public ModuleEngines engine = null;
 		public ModuleEnginesFX engineFX = null;
 
-		StartState m_state = StartState.None;
-
+	
+        /// <summary>
+        /// Retrieves the engine module from the part this module is contained in
+        /// </summary>
         private void BindEngine()
         {
-            engine = null;
-			engineFX = null;
-            foreach (PartModule module in this.part.Modules)
-            {
-                if (module is ModuleEngines)
-                {
-                    engine = module as ModuleEngines;
-                    break;
+            if (this.engine == null && this.engineFX == null) {
+                foreach (PartModule mod in this.part.Modules) {
+                    var module = mod as ModuleEngines;
+                    if (module != null) {
+                        engine = module;
+                        break;
+                    } else {
+                        var moduleFX = mod as ModuleEnginesFX;
+                        if (moduleFX != null) {
+                            engineFX = moduleFX;
+                            break;
+                        }
+                    }
                 }
-				else if (module is ModuleEnginesFX)
-				{
-					engineFX = module as ModuleEnginesFX;
-					break;
-				}
             }
         }
 
         public override void OnStart(StartState state)
         {
             Debug.Log("ModuleEngineThrustController OnStart(" + state.ToString() + ")");
-			m_state = state;
-
-            if (state == StartState.None) return;
+            if (state == StartState.None)
+                return;
             
             BindEngine();
-            
-            if (minimumThrustPercent < 0.0f) minimumThrustPercent = 0.0f;
-            if (minimumThrustPercent > 1.0f) minimumThrustPercent = 1.0f;
 
-            if (maximumThrustPercent < 0.0f) maximumThrustPercent = 0.0f;
-            if (maximumThrustPercent > 1.0f) maximumThrustPercent = 1.0f;
+            maximumThrustPercent = Mathf.Clamp01(maximumThrustPercent);
+            minimumThrustPercent = Mathf.Clamp(minimumThrustPercent, 0, maximumThrustPercent);
 
-            if (minimumThrustPercent > maximumThrustPercent) minimumThrustPercent = maximumThrustPercent;
-
-            if (initialThrust < minimumThrustPercent) initialThrust = minimumThrustPercent;
-            if (initialThrust > maximumThrustPercent) initialThrust = maximumThrustPercent;
-
-            // Save original engine data.
-            if (engine != null)
-            {
-                originalMaxThrust = engine.maxThrust;
-                originalHeatProduction = engine.heatProduction;
-                if (((int)state & (int)StartState.PreLaunch) > 0)
-                    thrustPercent = initialThrust;
-                else if (state == StartState.Editor)
-                    thrustPercent = initialThrust;
-
-				engine.maxThrust = originalMaxThrust * thrustPercent;
-				engine.heatProduction = originalHeatProduction * thrustPercent;
-			}
-			else if (engineFX != null)
-			{
-				originalMaxThrust = engineFX.maxThrust;
-				originalHeatProduction = engineFX.heatProduction;
-				if (((int)state & (int)StartState.PreLaunch) > 0)
-					thrustPercent = initialThrust;
-				else if (state == StartState.Editor)
-					thrustPercent = initialThrust;
-
-				engineFX.maxThrust = originalMaxThrust * thrustPercent;
-				engineFX.heatProduction = originalHeatProduction * thrustPercent;
-			}
-            Debug.Log("Data saved:" + originalMaxThrust.ToString() + " " + thrustPercent.ToString("0%"));
-
-            if (state == StartState.Editor)
-            {
-                EngineThrustControllerGUI.GetInstance().CheckClear();
-				if (showItemInList == true)
-				{
-					EngineThrustControllerGUIItem item = new EngineThrustControllerGUIItem(EngineThrustControllerGUI.GetInstance(), this);
-				}
-                return;
-            }
-            else
-            {
-                EngineThrustControllerGUI.GetInstance().ClearGUIItem();
-            }
-
-			if (canAdjustAtAnytime == true)
+			if (canAdjustAtAnytime)
 			{
 				Events["ContextMenuIncreaseThrust"].guiName = "Increase Thrust by " + percentAdjustmentStep.ToString("0%");
 				Events["ContextMenuDecreaseThrust"].guiName = "Decrease Thrust by " + percentAdjustmentStep.ToString("0%");
@@ -138,168 +86,101 @@ namespace EngineThrustController
 			Events["Group2"].guiActive = false;
             base.OnStart(state);
         }
+
+        [KSPEvent(name = "ContextMenuIncreaseThrust", guiActive = true, guiName = "Increase Thrust", active = true, category = "Thrust Control")]
+        public void ContextMenuIncreaseThrust()
+        {
+            if (!canAdjustAtAnytime)
+                return;
+            this.ActionGroupIncreaseThrust(null);
+        }
+
+        [KSPEvent(name = "ContextMenuDecreaseThrust", guiActive = true, guiName = "Decrease Thrust", active = true, category = "Thrust Control")]
+        public void ContextMenuDecreaseThrust()
+        {
+            if (canAdjustAtAnytime)
+                return;
+
+            this.ActionGroupDecreaseThrust(null);
+        }
+
 		[KSPEvent(name = "Group1", guiActive = true, guiName = "Set Group 1", active = true, category = "Grouping")]
 		public void Group1 ()
 		{
 			gp = 1;
 		}
-		[KSPEvent(name = "Group2", guiActive = true, guiName = "Set Group 1", active = true, category = "Grouping")]
+		[KSPEvent(name = "Group2", guiActive = true, guiName = "Set Group 2", active = true, category = "Grouping")]
 		public void Group2 ()
 		{
 			gp = 2;
 		}
-        [KSPEvent(name = "ContextMenuIncreaseThrust", guiActive = true, guiName = "Increase Thrust", active = true, category = "Thrust Control")]
-        public void ContextMenuIncreaseThrust()
-        {
-            if (canAdjustAtAnytime == false) return;
-            
-            thrustPercent += percentAdjustmentStep;
-            if (thrustPercent > maximumThrustPercent) thrustPercent = maximumThrustPercent;
-            if (thrustPercent < minimumThrustPercent) thrustPercent = minimumThrustPercent;
-            if (thrustPercent > 1.0f) thrustPercent = 1.0f;
-            if (thrustPercent < 0.0f) thrustPercent = 0.0f;
 
-            BindEngine();
-            if (engine != null)
-			{
-                engine.maxThrust = originalMaxThrust * thrustPercent;
-                engine.heatProduction = originalHeatProduction * thrustPercent;
-            }
-			else if (engineFX != null)
-			{
-                engineFX.maxThrust = originalMaxThrust * thrustPercent;
-                engineFX.heatProduction = originalHeatProduction * thrustPercent;
-            }
-        }
-        [KSPEvent(name = "ContextMenuDecreaseThrust", guiActive = true, guiName = "Decrease Thrust", active = true, category = "Thrust Control")]
-        public void ContextMenuDecreaseThrust()
-        {
-            if (canAdjustAtAnytime == false) return;
-
-            thrustPercent -= percentAdjustmentStep;
-            if (thrustPercent > maximumThrustPercent) thrustPercent = maximumThrustPercent;
-            if (thrustPercent < minimumThrustPercent) thrustPercent = minimumThrustPercent;
-            if (thrustPercent > 1.0f) thrustPercent = 1.0f;
-            if (thrustPercent < 0.0f) thrustPercent = 0.0f;
-
-            BindEngine();
-            if (engine != null)
-			{
-				engine.maxThrust = originalMaxThrust * thrustPercent;
-                engine.heatProduction = originalHeatProduction * thrustPercent;
-			}
-			else if (engineFX != null)
-			{
-				engineFX.maxThrust = originalMaxThrust * thrustPercent;
-				engineFX.heatProduction = originalHeatProduction * thrustPercent;
-			}
-        }
-        [KSPAction("Increase thrust", actionGroup = KSPActionGroup.None)]
+        [KSPAction("Increase thrust limiter", actionGroup = KSPActionGroup.None)]
         public void ActionGroupIncreaseThrust(KSPActionParam param)
         {
-            ContextMenuIncreaseThrust();
+            this.AdjustPercentage(this.percentAdjustmentStep);
         }
-        [KSPAction("Decrease thrust", actionGroup = KSPActionGroup.None)]
+        [KSPAction("Decrease thrust limiter", actionGroup = KSPActionGroup.None)]
         public void ActionGroupDecreaseThrust(KSPActionParam param)
         {
-            ContextMenuDecreaseThrust();
+            this.AdjustPercentage(-this.percentAdjustmentStep);
         }
 
+        /// <summary>
+        /// sync internal thrust value with actual value of the engine
+        /// </summary>
+        public override void OnUpdate() {
+            this.thrustPercent = this.GetPercentage();
+        }
+
+        /// <summary>
+        /// In-Editor Module info box content
+        /// </summary>
+        /// <returns>The info.</returns>
         public override string GetInfo()
         {
             string info = "Adjustable thrust.\n  Range: " + minimumThrustPercent.ToString("0%") + " - " + maximumThrustPercent.ToString("0%") + "\n  Step: " + ((int)(percentAdjustmentStep * 100.0f)).ToString() + "%";
             return info;
         }
 
-		public override void OnUpdate()
-		{
-			if (m_state != StartState.None && m_state != StartState.Editor)
-			{
-				if (canAdjustOverride == false)
-				{
-					BindEngine();
-					if (part.findFxGroup("running") != null && (engine != null || engineFX != null))
-					{
-						part.findFxGroup("running").SetPower(thrustPercent * vessel.ctrlState.mainThrottle);
-					}
-				}
-			}
-		}
+        /// <summary>
+        /// Adjusts the engine thrust limiter by the given amount
+        /// </summary>
+        /// <param name="step">Step.</param>
+        public void AdjustPercentage(float step)
+        {
+            this.SetPercentage(this.GetPercentage() + step);
+        }
+
+        /// <summary>
+        /// Retrieves the current thrust limiter of the underlying engine.
+        /// </summary>
+        /// <returns>The percentage.</returns>
+        public float GetPercentage() {
+            if (this.engine != null)
+                return this.engine.thrustPercentage / 100f;
+            if (this.engineFX != null)
+                return this.engineFX.thrustPercentage / 100f;
+            return -1;
+        }
 
 		/// <summary>
-		/// This function should be called in FixedUpdate() because it will forcibly change the throttle setting which will be reset every frame.
+		/// Sets the underlying engine thrust limiter to the given value.
 		/// </summary>
 		/// <param name="percent">The throttle percentage.</param>
 		public void SetPercentage(float percent)
 		{
-			if (canAdjustAtAnytime == false && canAdjustOverride == false) return;
-			thrustPercent = percent;
-			if (thrustPercent > maximumThrustPercent) thrustPercent = maximumThrustPercent;
-			if (thrustPercent < minimumThrustPercent) thrustPercent = minimumThrustPercent;
-			if (thrustPercent > 1.0f) thrustPercent = 1.0f;
-			if (thrustPercent < 0.0f) thrustPercent = 0.0f;
+            if (canAdjustAtAnytime || canAdjustOverride) {
+                thrustPercent = Mathf.Clamp01(Mathf.Clamp(percent, minimumThrustPercent, maximumThrustPercent));
 			
-			BindEngine();
-			if (engine != null)
-			{
-				if (part.findFxGroup("running") != null)
-				{
-					//Debug.Log("Setting FXGroup to: " + thrustPercent.ToString());
-					part.findFxGroup("running").SetPower(thrustPercent);
-				}
-				engine.requestedThrottle = thrustPercent;
-				engine.currentThrottle = thrustPercent;
-				if (canAdjustOverride == false)
-				{
-					engine.maxThrust = originalMaxThrust;
-					engine.heatProduction = originalHeatProduction;
-				}
-			}
-			else if (engineFX != null)
-			{
-				if (part.findFxGroup("running") != null)
-				{
-					//Debug.Log("Setting FXGroup to: " + thrustPercent.ToString());
-					part.findFxGroup("running").SetPower(thrustPercent);
-				}
-				engineFX.requestedThrottle = thrustPercent;
-				engineFX.currentThrottle = thrustPercent;
-				if (canAdjustOverride == false)
-				{
-					engineFX.maxThrust = originalMaxThrust;
-					engineFX.heatProduction = originalHeatProduction;
-				}
-			}
-		}
-        public void IncreaseInitialThrust()
-        {
-            initialThrust += percentAdjustmentStep;
-            if (initialThrust > maximumThrustPercent) initialThrust = maximumThrustPercent;
-            if (initialThrust < minimumThrustPercent) initialThrust = minimumThrustPercent;
-            if (initialThrust > 1.0f) initialThrust = 1.0f;
-            if (initialThrust < 0.0f) initialThrust = 0.0f;
+			    BindEngine();
 
-            BindEngine();
-            if (engine != null)
-                engine.maxThrust = originalMaxThrust * initialThrust;
-			else if (engineFX != null)
-				engineFX.maxThrust = originalMaxThrust * initialThrust;
+    			if (engine != null) {
+                    engine.thrustPercentage = this.thrustPercent * 100f;
+			    } else if (engineFX != null) {
+                  engineFX.thrustPercentage = this.thrustPercent * 100f;
+			    }
+		    }
         }
-
-        public void DecreaseInitialThrust()
-        {
-            initialThrust -= percentAdjustmentStep;
-            if (initialThrust > maximumThrustPercent) initialThrust = maximumThrustPercent;
-            if (initialThrust < minimumThrustPercent) initialThrust = minimumThrustPercent;
-            if (initialThrust > 1.0f) initialThrust = 1.0f;
-            if (initialThrust < 0.0f) initialThrust = 0.0f;
-
-            BindEngine();
-            if (engine != null)
-                engine.maxThrust = originalMaxThrust * initialThrust;
-			else if (engineFX != null)
-				engineFX.maxThrust = originalMaxThrust * initialThrust;
-        }
-
     }
 }
